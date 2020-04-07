@@ -9,32 +9,54 @@ import os
 class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        
+        STYLE = ':enabled{background-color: #565554;} :disabled{background-color:#858585; color:#acadac}'
         # SetupUI
         self.setupUi(self)
-        
+        # Window Design
+        self.Information.setColumnCount(2)
+        prop = QtWidgets.QTableWidgetItem('Propiedad')
+        value = QtWidgets.QTableWidgetItem('Valor')
+        prop.setBackground(QtGui.QColor(86, 85, 84))
+        prop.setForeground(QtGui.QColor(255, 255, 255))
+        value.setBackground(QtGui.QColor(86, 85, 84))
+        value.setForeground(QtGui.QColor(255, 255, 255))
+        self.Atras.setStyleSheet(STYLE)
+        self.Pause.setStyleSheet(STYLE)
+        self.ToggleAudio.setStyleSheet(STYLE)
+        self.Play.setStyleSheet(STYLE)
+        self.Pause.setStyleSheet(STYLE)
+        self.Stop.setStyleSheet(STYLE)
+        self.Prev.setStyleSheet(STYLE)
+        self.Next.setStyleSheet(STYLE)
+        self.Information.setHorizontalHeaderItem(0, prop)
+        self.Information.setHorizontalHeaderItem(1, value)        
+        # Icon DIR
         ICON_DIR = os.path.join(os.getcwd(), 'GUI', 'UI')
         # Icons
         self.noMuteIcon = QtGui.QIcon(os.path.join(ICON_DIR, 'altavoz.png'))
         self.MuteIcon = QtGui.QIcon(os.path.join(ICON_DIR, 'mudo.png'))
-
-        # Artists Query
-        self.artists_query = g.get_artists()
+        # Duration
+        self.duration = 0
+        # Level
+        self.level = 0
         
+        # Button Atras
+        self.Atras.setEnabled(False)
+
         # All lists
-        self.artists = [user for user in self.artists_query]
         self.albumes_current = []
-        self.songs_current = []
         
         # Query Artists
-        self._populate_artist()
+        # self._populate_artist()
 
         # Artist Clicked
-        self.Artistas.itemClicked.connect(self._artista_click)
+        # self.Artistas.itemClicked.connect(self._artista_click)
         
         # Album Clicked
-        self.Albumes.itemClicked.connect(self._albumes_click)
+        # self.Albumes.itemClicked.connect(self._albumes_click)
         
+        self.Explorer.itemDoubleClicked.connect(self._explorer_dblClick)
+        self.Explorer.itemClicked.connect(self._explorer_click)
         # Song clicked
         self.Canciones.itemClicked.connect(self._canciones_click)
         
@@ -46,7 +68,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         
         # Set Player
         self.player = QtMultimedia.QMediaPlayer()
-        
+        # Signal 
+        self.player.durationChanged.connect(self._duration_changed)
+        self.player.positionChanged.connect(self._position_changed)
         # Song on double click
         self.Canciones.itemDoubleClicked.connect(self._play_song)
         
@@ -56,7 +80,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         # Prev
         self.Prev.clicked.connect(self._play_prev)
 
-
+        # Atras 
+        self.Atras.clicked.connect(self._before)
         # Configure Volume
         self.volume = 100
         self.Volumen.setMinimum(0)
@@ -70,6 +95,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.position = None
         self.muted = False
 
+        # LEVEL SETTER
+        self._set_level()
+
         # Toggle Audio Icon
         if not self.muted:
             self.ToggleAudio.setIcon(self.noMuteIcon)
@@ -80,9 +108,80 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         # On Exit
         self.closeEvent = self._close_event
 
-    def _populate_artist(self):
-        for artist in self.artists_query:
-            self.Artistas.addItem(artist.name)
+    # def _populate_artist(self):
+    #     for artist in self.artists_query:
+    #         self.Explorer.addItem(artist.name)
+
+    
+    def _set_level(self, element=False):
+        # Level 0: Todo
+        # Level 1: Artists
+        if self.level == 0:
+            self.Explorer.clear()
+            self.Atras.setEnabled(False)
+            self.songs_current, self.total = g.get_all_songs()
+            self._populate_songs()
+            self.Explorer.addItem(f'Todo ({self.total})')
+            self.Explorer.setCurrentRow(0)
+            self._make_playlist()
+            self.Canciones.setCurrentRow(0)
+            self.current_song = 0
+
+        if self.level == 1:
+            self.current_artist, self.artists_str = g.get_artists()
+            self.Explorer.clear()
+            for artist in self.artists_str:
+                self.Explorer.addItem(artist)
+                self.Atras.setEnabled(True)
+                self.Explorer.setCurrentRow(0)
+                self._select_songs_artists()
+
+        if self.level == 2:
+            current_artist = self.current_artist[self.Explorer.row(element)]
+            self.current_albums, self.album_str = g.get_artists_albums(current_artist)
+            self.Explorer.clear()
+            for album in self.album_str:
+                self.Explorer.addItem(album)
+                self.Atras.setEnabled(True)
+                self.Explorer.setCurrentRow(0)
+                self.songs_current = g.get_song_from_album(self.current_albums[0])
+    
+    def _before(self):
+        if self.level != 0:
+            self.level -= 1
+            self._set_level()
+
+    def _select_songs_artists(self, element=0):
+        if isinstance(element, int):
+            self.songs_current = g.get_song_from_artist(self.current_artist[element])
+        else:
+            selected_row = self.Explorer.row(element)
+            self.songs_current = g.get_song_from_artist(self.current_artist[selected_row])
+        self._populate_songs()
+
+    def _select_album_songs(self, element=0):
+        if isinstance(element, int):
+            self.songs_current = g.get_song_from_album(self.current_albums[element])
+        else:
+            index = self.Explorer.row(element)    
+            current_album = self.current_albums[index]
+            self.songs_current = g.get_song_from_album(current_album)
+        self._populate_songs()
+
+    def _explorer_dblClick(self, element):
+        if self.level != 2:
+            if self.level == 0:
+                self.level = 1
+                self._set_level(element)
+            elif self.level == 1:
+                self.level = 2
+                self._set_level(element)
+
+    def _explorer_click(self, element):
+        if self.level == 1:
+            self._select_songs_artists(element)
+        if self.level == 2:
+            self._select_album_songs(element)
     
     def _toggle_audio(self):
         if self.player.isMuted():
@@ -100,31 +199,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         current_artist = self.artists[selected_row]
         self._populate_album(current_artist)
 
-    def _populate_album(self, artist):
-        album_query = g.get_artist_albums(artist)
-        self.Albumes.clear()
-        self.albumes_current = []
-        for album in album_query:
-            self.Albumes.addItem(album.name)
-            self.albumes_current.append(album)
+    # def _populate_album(self, artist):
+    #     album_query = g.get_artist_albums(artist)
+    #     self.Explorer.clear()
+    #     self.albumes_current = []
+    #     for album in album_query:
+    #         self.Explorer.addItem(album.name)
+    #         self.albumes_current.append(album)
 
-    def _albumes_click(self, item_clicked):
-        selected_row = self.Albumes.row(item_clicked)
-        current_album = self.albumes_current[selected_row]
-        self._populate_songs(current_album)
+    # def _albumes_click(self, item_clicked):
+    #     selected_row = self.Albumes.row(item_clicked)
+    #     current_album = self.albumes_current[selected_row]
+    #     self._populate_songs(current_album)
 
 
-    def _populate_songs(self, album):
-        song_query = g.get_album_songs(album)
+    def _populate_songs(self):    
         self.Canciones.clear()
-        self.songs_current = []
-        for song in song_query:
+        for song in self.songs_current:
             self.Canciones.addItem(song.title)
-            self.songs_current.append(song)
     
     def _canciones_click(self, item_clicked):
         selected_row = self.Canciones.row(item_clicked)
         self.current_song = selected_row
+
 
     def _play_song(self):
         if self.player.state() == 2:
@@ -137,6 +234,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
             self.playlist.setCurrentIndex(self.current_song)
             self.player.setVolume(self.volume)
             self.player.play()
+
+    def _duration_changed(self, duration):
+        self.Progress.setMinimum = 0
+        self.Progress.setMaximum = duration
+        self.duration = duration
+
+    def _percentaje_calculator(self, part):
+        if not self.duration:
+            return 0
+        return int(100 * float(part)/float(self.duration))
+
+    def _position_changed(self, position):
+        self.Progress.setValue(self._percentaje_calculator(position))
 
     def _play_next(self):
         self.playlist.setCurrentIndex(self.playlist.nextIndex())

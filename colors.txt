@@ -1,0 +1,5 @@
+#D19ECC # UI Items
+#89AAE6 # Background 1
+#3685B5 # Primary
+#0471A6 # Dark 
+#565554 # Text

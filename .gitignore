@@ -1,0 +1,5 @@
+my_database.db
+database.txt
+backend/__pycache__/
+GUI/__pycache__/
+.vscode/

@@ -1,3 +1,5 @@
+"""The main window operations."""
+
 from GUI.main_window import Ui_Pybar2000
 from GUI.loading import LoadingWindow
 from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
@@ -7,6 +9,7 @@ import sys
 import miniaudio
 import os
 
+# TODO: Move the qss to a file
 QSS = qss = """
 QMenuBar {
     background-color: #595959
@@ -39,9 +42,13 @@ QMenu::item:selected {
 }
 """
 
+# TODO: Refactor, profile, find memory leaks
 
 class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
+    """The main window controller."""
+
     def __init__(self, parent=None):
+        """Configure al the desing, colors styles ui etc."""
         super(MainWindow, self).__init__(parent)
         STYLE = ':enabled{background-color: #565554;} :disabled{background-color:#858585; color:#acadac}'
         # SetupUI
@@ -351,6 +358,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         pass
 
 def main():
+    """Run the program in the current module."""
     app = QApplication(sys.argv)
     form = MainWindow()
     app.setStyleSheet(QSS)

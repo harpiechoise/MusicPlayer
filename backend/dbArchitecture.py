@@ -1,3 +1,5 @@
+"""This module is the definition of the database models for the indexing of the music library."""
+
 # from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 # from sqlalchemy.orm import relationship, sessionmaker
 # from sqlalchemy.ext.declarative import declarative_base
@@ -43,20 +45,32 @@ db = SqliteDatabase('my_database.db')
 
 
 class BaseModel(Model):
+    """This is the base model, thats contains the database of all subsequent tables."""
+
     class Meta:
+        """This class holds the corresponding database."""
+
         database = db
 
 class Image(BaseModel):
+    """This table is for parse the album images is Bytes."""
+
     album_name = CharField(null=False)
     image = BlobField(null=False)
 
 class Artist(BaseModel):
+    """This table stands for artists names."""
+
     name = CharField(null=False, unique=True)
 
 class Genre(BaseModel):
+    """This table stands for genres."""
+
     genres = CharField(null=False, unique=True)
 
 class Album(BaseModel):
+    """This table holds the album metadata."""
+
     name = CharField(null=False, unique=False)
     artist = ForeignKeyField(Artist, backref='albums', null=True)
     album_image = ForeignKeyField(Image, null=True)
@@ -66,6 +80,8 @@ class Album(BaseModel):
     total_discs = IntegerField(null=True, unique=False)
 
 class Song(BaseModel):
+    """This table holds the song metadata."""
+    
     title = CharField(null=False, unique=False)
     album = ForeignKeyField(Album, backref='songs', null=True)
     path = CharField(null=True, unique=False)

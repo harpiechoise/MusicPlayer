@@ -1,3 +1,4 @@
+"""Music creation handler."""
 import backend.dbArchitecture as database
 from backend.dbArchitecture import Album, Artist, Song, Genre, Image
 from typing import List
@@ -12,6 +13,63 @@ DatabaseConnection = database.db
 ReleaseYear = str
 
 class CreateSong():
+    """A song creation handler.
+    
+    This class takes all the values of the metadata in the song.
+    with the purpose of indexing the song in the library local database.
+    
+    Properties
+    -----
+    song_file_path: The path of the song file.
+    encoder: The encoder information of the song.
+    song_duration: The duration of the song in secs
+    artist: The name of the artist
+    album_name: The name of the album
+    album_year: The release date of the album
+    album_tracks: The track number of the album
+    album_total_discs: The number of disc in the album
+    song_title: The title of the actual song
+    isrc: International Standard Recording Code
+    song_track_number: The track number of the actual song
+    song_disc_number: The disc number of the actual song
+    album_image: The cover image in Bytes string
+
+    Methods
+    -------
+        private _createArtist
+        -------------
+        perfom the creation of the artist instance if the artist exists return the existing record
+        
+        Returns
+        -------
+        ArtistInstance
+
+        private _createAlbum
+        ------------
+        perform the creation of the album instance and genres if the album of genres exists, return the existing
+        artist of gentes
+
+        Returns
+        -------
+        AlbumInstance
+
+        private _createSong
+        -----------
+        Perform song intance creation
+        
+        Returns
+        -------
+        SongInstance
+
+        private _check_db
+        ----------
+        Check the DB tables
+
+        public save
+        ------
+        Saves the record in the database.
+    """
+
     def __init__(self,
                  song_file_path,
                  encoder,
@@ -27,9 +85,7 @@ class CreateSong():
                  song_track_number=0,
                  song_disc_number=0,
                  album_image=None):
-        
-
-
+        """Init of the song creator class."""
         # Song Technical Data
         self.song_file_path = song_file_path
         self.song_duration = song_duration
@@ -102,6 +158,7 @@ class CreateSong():
             self.db.create_tables([Album, Artist, Song, Genre])
 
     def save(self):
+        """Save the song record."""
         self._check_db()
         song = self._create_song()
         song.save()

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import mutagen
 from backend import dbQuerys as dq
-from QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal
 
 
 class MusicLoader():

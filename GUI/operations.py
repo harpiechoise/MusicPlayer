@@ -43,6 +43,8 @@ QMenu::item:selected {
 
 # TODO: Refactor, profile, find memory leaks
 
+UI_PATH = os.path.join(os.getcwd(), 'GUI', 'UI')
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     """The main window controller."""
@@ -52,6 +54,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         super(MainWindow, self).__init__(parent)
         STYLE = (':enabled{background-color: #565554;} ' +
                  ':disabled{background-color:#858585; color:#acadac}')
+        # Stop
+        self.STOP = QtGui.QIcon(os.path.join(UI_PATH, 'pause.png'))
+        # Play
+        self.PLAY = QtGui.QIcon(os.path.join(UI_PATH, 'play.png'))
+
         # SetupUI
         self.setupUi(self)
         # Window Design
@@ -63,10 +70,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         value.setBackground(QtGui.QColor(86, 85, 84))
         value.setForeground(QtGui.QColor(255, 255, 255))
         self.Atras.setStyleSheet(STYLE)
-        self.Pause.setStyleSheet(STYLE)
+        # self.Pause.setStyleSheet(STYLE)
         self.ToggleAudio.setStyleSheet(STYLE)
         self.Play.setStyleSheet(STYLE)
-        self.Pause.setStyleSheet(STYLE)
+        # self.Pause.setStyleSheet(STYLE)
         self.Stop.setStyleSheet(STYLE)
         self.Prev.setStyleSheet(STYLE)
         self.Next.setStyleSheet(STYLE)
@@ -105,6 +112,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         # All lists
         self.albumes_current = []
 
+        # When song clicked
+        self.Canciones.currentRowChanged.connect(self._get_metadata)
+
         # Query Artists
         # self._populate_artist()
 
@@ -125,6 +135,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         # Current selected artist
         self.current_artist = None
 
+        # Info Row Count
+        self.Information.setRowCount(10)
+        self.Information.verticalHeader().setVisible(False)
         # Set Player
         self.player = QtMultimedia.QMediaPlayer()
         # Signal
@@ -149,7 +162,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.Volumen.valueChanged.connect(self._volume_change)
 
         #  Pause Stop
-        self.Pause.clicked.connect(self._pause)
+        # self.Pause.clicked.connect(self._pause)
         self.Stop.clicked.connect(self._stop)
         self.position = None
         self.muted = False
@@ -182,8 +195,89 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.form_loading.closed.connect(self._finish_import)
 
     def _finish_import(self):
-        print("FINISHED")
         self._set_level()
+
+    def _get_metadata(self, element):
+        # Get current row
+        row = self.Canciones.currentRow()
+        # Get the songs
+        current_song = self.songs_current[row]
+        current_album = current_song.album
+        current_artist = current_album.artist
+        current_genre = current_album.genre
+        # Set Items
+
+        # Artist name
+        artist_name_key = QtWidgets.QTableWidgetItem('Artist')
+        artist_name_value = QtWidgets\
+            .QTableWidgetItem(f'{current_artist.name}')
+        # All the song info
+        song_title_key = QtWidgets.QTableWidgetItem(f'Title')
+        song_title_value = QtWidgets.QTableWidgetItem(f'{current_song.title}')
+        song_duration_key = QtWidgets.QTableWidgetItem('Duration')
+        song_duration_value = QtWidgets\
+            .QTableWidgetItem(f'{current_song.duration}')
+        song_track_number_key = QtWidgets.QTableWidgetItem('Track Number')
+        song_track_number_value = QtWidgets\
+            .QTableWidgetItem(f'{current_song.track}')
+        song_disc_number_key = QtWidgets\
+            .QTableWidgetItem("Song Disc")
+        song_disc_number_value = QtWidgets\
+            .QTableWidgetItem(f'{current_song.disc_number}')
+        # All album info
+        album_name_key = QtWidgets.QTableWidgetItem('Album Name')
+        album_name_value = QtWidgets\
+            .QTableWidgetItem(f'{current_album.name}')
+        album_release_key = QtWidgets\
+            .QTableWidgetItem('Album Release Date')
+        album_release_value = QtWidgets\
+            .QTableWidgetItem(f'{current_album.year}')
+        album_genres_list = ", ".join(current_genre.genres
+                                      .strip('][')
+                                      .split(', ')).replace('\'', '')
+        album_genres_key = QtWidgets.QTableWidgetItem('Genres')
+        album_genres_value = QtWidgets\
+            .QTableWidgetItem(f'{album_genres_list}')
+        album_total_tracks_key = QtWidgets\
+            .QTableWidgetItem('Album Total Tracks')
+        album_total_tracks_value = QtWidgets\
+            .QTableWidgetItem(f'{current_album.album_tracks}')
+        album_disc_number_key = QtWidgets\
+            .QTableWidgetItem('Album Disc Number')
+        album_disc_number_value = QtWidgets\
+            .QTableWidgetItem(f'{current_album.total_discs}')
+        # Artist Name
+
+        # Title
+        self.Information.setItem(0, 0, song_title_key)
+        self.Information.setItem(0, 1, song_title_value)
+        # Artist
+        self.Information.setItem(1, 0, artist_name_key)
+        self.Information.setItem(1, 1, artist_name_value)
+        # Album Name
+        self.Information.setItem(2, 0, album_name_key)
+        self.Information.setItem(2, 1, album_name_value)
+        # Song Duration
+        self.Information.setItem(3, 0, song_duration_key)
+        self.Information.setItem(3, 1, song_duration_value)
+        # Song Track Number
+        self.Information.setItem(4, 0, song_track_number_key)
+        self.Information.setItem(4, 1, song_track_number_value)
+        # Song Disc Number
+        self.Information.setItem(5, 0, song_disc_number_key)
+        self.Information.setItem(5, 1, song_disc_number_value)
+        # Album Release Key
+        self.Information.setItem(6, 0, album_release_key)
+        self.Information.setItem(6, 1, album_release_value)
+        # Album Genres Key
+        self.Information.setItem(7, 0, album_genres_key)
+        self.Information.setItem(7, 1, album_genres_value)
+        # Album Total Tracks
+        self.Information.setItem(8, 0, album_total_tracks_key)
+        self.Information.setItem(8, 1, album_total_tracks_value)
+        # Album Disc Number
+        self.Information.setItem(9, 0, album_disc_number_key)
+        self.Information.setItem(9, 1, album_disc_number_value)
 
     def _set_level(self, element=False):
         # Level 0: Todo
@@ -307,12 +401,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
             if self.player.position:
                 self.player.setPosition(self.position)
                 self.player.play()
-        else:
+                self.Play.setIcon(self.STOP)
+
+        elif self.player.state() == 0:
             self._make_playlist()
             self.player.setPlaylist(self.playlist)
             self.playlist.setCurrentIndex(self.current_song)
             self.player.setVolume(self.volume)
             self.player.play()
+            self.Play.setIcon(self.STOP)
+
+        elif self.player.state() == 1:
+            self._pause()
+            self.Play.setIcon(self.PLAY)
 
     def _duration_changed(self, duration):
         self.Progress.setMinimum = 0

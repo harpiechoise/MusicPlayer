@@ -6,7 +6,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
 from PyQt5.QtWidgets import QApplication, QFileDialog
 import backend.dbGet as g
 import sys
-import miniaudio
 import os
 
 # TODO: Move the qss to a file
@@ -15,28 +14,28 @@ QMenuBar {
     background-color: #595959
 }
 QMenuBar::item {
-    spacing: 3px;           
+    spacing: 3px;
     padding: 2px 10px;
     background-color: #595959;
 }
-QMenuBar::item:selected {    
+QMenuBar::item:selected {
     background-color: #757575;
 }
 QMenuBar::item:pressed {
     background: #757575;
 }
 
-/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */  
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
 
 QMenu {
-    background-color: #999999;   
+    background-color: #999999;
     border: 1px solid black;
     margin: 2px;
 }
 QMenu::item {
     background-color: transparent;
 }
-QMenu::item:selected { 
+QMenu::item:selected {
     background-color: #bfbfbf;
     color: rgb(255,255,255);
 }
@@ -44,13 +43,15 @@ QMenu::item:selected {
 
 # TODO: Refactor, profile, find memory leaks
 
+
 class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     """The main window controller."""
 
     def __init__(self, parent=None):
         """Configure al the desing, colors styles ui etc."""
         super(MainWindow, self).__init__(parent)
-        STYLE = ':enabled{background-color: #565554;} :disabled{background-color:#858585; color:#acadac}'
+        STYLE = (':enabled{background-color: #565554;} ' +
+                 ':disabled{background-color:#858585; color:#acadac}')
         # SetupUI
         self.setupUi(self)
         # Window Design
@@ -85,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         file_menu.addAction(self.add_folder_action)
         file_menu.addSeparator()
         file_menu.addAction(self.close_app_action)
-        
+
         self.add_folder_action.triggered.connect(self._select_folder)
 
         # Icon DIR
@@ -97,48 +98,48 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.duration = 0
         # Level
         self.level = 0
-        
+
         # Button Atras
         self.Atras.setEnabled(False)
 
         # All lists
         self.albumes_current = []
-        
+
         # Query Artists
         # self._populate_artist()
 
         # Artist Clicked
         # self.Artistas.itemClicked.connect(self._artista_click)
-        
+
         # Album Clicked
         # self.Albumes.itemClicked.connect(self._albumes_click)
-        
+
         self.Explorer.itemDoubleClicked.connect(self._explorer_dblClick)
         self.Explorer.itemClicked.connect(self._explorer_click)
         # Song clicked
         self.Canciones.itemClicked.connect(self._canciones_click)
-        
+
         # Play button click
         self.Play.clicked.connect(self._play_song)
-        
-        # Current selected artist 
+
+        # Current selected artist
         self.current_artist = None
-        
+
         # Set Player
         self.player = QtMultimedia.QMediaPlayer()
-        # Signal 
+        # Signal
         self.player.durationChanged.connect(self._duration_changed)
         self.player.positionChanged.connect(self._position_changed)
         # Song on double click
         self.Canciones.itemDoubleClicked.connect(self._play_song)
-        
+
         # Next
         self.Next.clicked.connect(self._play_next)
 
         # Prev
         self.Prev.clicked.connect(self._play_prev)
 
-        # Atras 
+        # Atras
         self.Atras.clicked.connect(self._before)
         # Configure Volume
         self.volume = 100
@@ -146,7 +147,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.Volumen.setMaximum(100)
         self.Volumen.setValue(self.volume)
         self.Volumen.valueChanged.connect(self._volume_change)
-    
+
         #  Pause Stop
         self.Pause.clicked.connect(self._pause)
         self.Stop.clicked.connect(self._stop)
@@ -170,7 +171,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     #         self.Explorer.addItem(artist.name)
 
     def _select_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Escoge una carpeta", "/home", QFileDialog.ShowDirsOnly)
+        folder = QFileDialog.getExistingDirectory(self,
+                                                  "Escoge una carpeta",
+                                                  "/home",
+                                                  QFileDialog.ShowDirsOnly)
+
         self.form_loading = LoadingWindow(folder, parent=MainWindow)
         self.form_loading.load()
         self.songs_current, self.total = g.get_all_songs()
@@ -186,7 +191,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.songs_current, self.total = g.get_all_songs()
         if not self.songs_current:
             self.Explorer.setEnabled(False)
-        
+
         if self.level == 0:
             self.Explorer.setEnabled(True)
             self.Explorer.clear()
@@ -209,14 +214,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
 
         if self.level == 2:
             current_artist = self.current_artist[self.Explorer.row(element)]
-            self.current_albums, self.album_str = g.get_artists_albums(current_artist)
+            query = g.get_artists_albums(current_artist)
+            self.current_albums, self.album_str = query
             self.Explorer.clear()
             for album in self.album_str:
                 self.Explorer.addItem(album)
                 self.Atras.setEnabled(True)
                 self.Explorer.setCurrentRow(0)
-                self.songs_current = g.get_song_from_album(self.current_albums[0])
-    
+                songs_current = g.get_song_from_album(self.current_albums[0])
+                self.songs_current = songs_current
+
     def _before(self):
         if self.level != 0:
             self.level -= 1
@@ -224,17 +231,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
 
     def _select_songs_artists(self, element=0):
         if isinstance(element, int):
-            self.songs_current = g.get_song_from_artist(self.current_artist[element])
+            element = self.current_artist[element]
+            self.songs_current = g.get_song_from_artist(element)
         else:
             selected_row = self.Explorer.row(element)
-            self.songs_current = g.get_song_from_artist(self.current_artist[selected_row])
+            element = self.current_artist[selected_row]
+            self.songs_current = g.get_song_from_artist(element)
         self._populate_songs()
 
     def _select_album_songs(self, element=0):
         if isinstance(element, int):
-            self.songs_current = g.get_song_from_album(self.current_albums[element])
+            element = self.current_albums[element]
+            self.songs_current = g.get_song_from_album(element)
         else:
-            index = self.Explorer.row(element)    
+            index = self.Explorer.row(element)
             current_album = self.current_albums[index]
             self.songs_current = g.get_song_from_album(current_album)
         self._populate_songs()
@@ -253,13 +263,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
             self._select_songs_artists(element)
         if self.level == 2:
             self._select_album_songs(element)
-    
+
     def _toggle_audio(self):
         if self.player.isMuted():
             self.ToggleAudio.setIcon(self.noMuteIcon)
             self.player.setMuted(False)
             self.player.setVolume(self.volume)
-            
+
         else:
             self.ToggleAudio.setIcon(self.MuteIcon)
             self.volume = self.player.volume()
@@ -283,16 +293,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     #     current_album = self.albumes_current[selected_row]
     #     self._populate_songs(current_album)
 
-
-    def _populate_songs(self):    
+    def _populate_songs(self):
         self.Canciones.clear()
         for song in self.songs_current:
             self.Canciones.addItem(song.title)
-    
+
     def _canciones_click(self, item_clicked):
         selected_row = self.Canciones.row(item_clicked)
         self.current_song = selected_row
-
 
     def _play_song(self):
         if self.player.state() == 2:
@@ -315,7 +323,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         if not self.duration:
             return 0
         return int(100 * float(part)/float(self.duration))
-    
+
     def _percentage_to_num(self, percent):
         return (percent * self.duration) / 100.0
 
@@ -330,7 +338,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.playlist.setCurrentIndex(self.playlist.nextIndex())
         self.player.play()
         self.Canciones.setCurrentRow(self.playlist.currentIndex())
-    
+
     def _play_prev(self):
         self.playlist.setCurrentIndex(self.playlist.previousIndex())
         self.player.play()
@@ -339,7 +347,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     def _make_playlist(self):
         playlist = QtMultimedia.QMediaPlaylist()
         for song in self.songs_current:
-            media = QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(song.path))
+            song_file = QtCore.QUrl.fromLocalFile(song.path)
+            media = QtMultimedia.QMediaContent(song_file)
             playlist.addMedia(media)
         self.playlist = playlist
 
@@ -350,12 +359,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     def _pause(self):
         self.position = self.player.position()
         self.player.pause()
-        
+
     def _stop(self):
         self.player.stop()
 
     def _close_event(self):
         pass
+
 
 def main():
     """Run the program in the current module."""
@@ -364,6 +374,7 @@ def main():
     app.setStyleSheet(QSS)
     form.show()
     app.exec()
+
 
 if __name__ == "__main__":
     main()

@@ -12,12 +12,13 @@ Genres = List[str]
 DatabaseConnection = database.db
 ReleaseYear = str
 
+
 class CreateSong():
     """A song creation handler.
-    
+
     This class takes all the values of the metadata in the song.
     with the purpose of indexing the song in the library local database.
-    
+
     Properties
     -----
     song_file_path: The path of the song file.
@@ -38,16 +39,17 @@ class CreateSong():
     -------
         private _createArtist
         -------------
-        perfom the creation of the artist instance if the artist exists return the existing record
-        
+        perfom the creation of the artist instance if the artist exists return
+        the existing record
+
         Returns
         -------
         ArtistInstance
 
         private _createAlbum
         ------------
-        perform the creation of the album instance and genres if the album of genres exists, return the existing
-        artist of gentes
+        perform the creation of the album instance and genres if the album of
+        genres exists, return the existing artist and genres instances
 
         Returns
         -------
@@ -56,7 +58,7 @@ class CreateSong():
         private _createSong
         -----------
         Perform song intance creation
-        
+
         Returns
         -------
         SongInstance
@@ -73,7 +75,7 @@ class CreateSong():
     def __init__(self,
                  song_file_path,
                  encoder,
-                 song_duration,     
+                 song_duration,
                  artist='Unknown Artist',
                  genres=['Unknow Genre'],
                  album_name='Unknow Album',
@@ -89,7 +91,7 @@ class CreateSong():
         # Song Technical Data
         self.song_file_path = song_file_path
         self.song_duration = song_duration
-        
+
         # Song Metadata
         self.song_title = song_title
         self.song_isrc = isrc
@@ -98,7 +100,7 @@ class CreateSong():
         self.encoder = encoder
         # Artist Name
         self.artist_name = artist
-        
+
         # Genres
         self.genres = genres
 
@@ -109,16 +111,12 @@ class CreateSong():
         self.album_total_discs = album_total_discs
         self.album_image = album_image
 
-        try:
-            self.db.connect()
-        except:
-            pass
+        self.db.connect()
 
     def _createArtist(self):
         artist, _ = Artist.get_or_create(name=self.artist_name)
         artist.save()
         return artist
-        
 
     def _createAlbum(self):
 
@@ -126,7 +124,7 @@ class CreateSong():
         genres, created = Genre.get_or_create(genres=str(self.genres))
         if created:
             genres.save()
-        
+
         album, _ = Album.get_or_create(name=self.album_name)
         album.genre = genres
         album.artist = obj_artist
@@ -135,12 +133,13 @@ class CreateSong():
         album.total_discs = self.album_total_discs
 
         if self.album_image:
-            album_image = Image.get_or_create(album_name=self.album_name, image=self.album_image)
+            album_image = Image.get_or_create(album_name=self.album_name,
+                                              image=self.album_image)
             album.album_image = album_image
-        
+
         album.save()
         return album
-    
+
     def _create_song(self):
         song, _ = Song.get_or_create(title=self.song_title)
         album = self._createAlbum()

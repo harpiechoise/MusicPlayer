@@ -1,3 +1,1 @@
 """A garbage file."""
-
-

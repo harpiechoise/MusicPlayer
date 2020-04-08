@@ -1,4 +1,5 @@
-"""This module is the definition of the database models for the indexing of the music library."""
+"""This module is the definition of the database models
+   for the indexing of the music library."""
 
 # from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 # from sqlalchemy.orm import relationship, sessionmaker
@@ -21,10 +22,12 @@
 #     _id = Column('id', Integer, primary_key=True)
 #     name = Column('album', String, unique=True, nullable=True)
 #     artist_id = Column(Integer, ForeignKey('artist._id'))
-#     artist = relationship('Artist', backref='albums', foreign_keys=[artist_id])
+#     artist = relationship('Artist', backref='albums',
+#                            foreign_keys=[artist_id])
 #     date = Column('date', Year, unique=True, nullable=True)
 #     genre = Column('genre', String, unique=True, nullable=True)
-#     album_tracks = Column('total_tracks', Integer, unique=True, nullable=True)
+#     album_tracks = Column('total_tracks', Integer, unique=True,
+#                            nullable=True
 #     total_discs =  Column('disc_total', Integer, unique=True, nullable=True)
 
 # class Song(Base):
@@ -40,17 +43,27 @@
 #     disc_number = Column('disc_number', Integer, unique=False, nullable=True)
 
 
-from peewee import Model, SqliteDatabase, CharField, IntegerField, ForeignKeyField, BlobField
+from peewee import (Model,
+                    SqliteDatabase,
+                    CharField,
+                    IntegerField,
+                    ForeignKeyField,
+                    BlobField)
+
 db = SqliteDatabase('my_database.db')
 
 
 class BaseModel(Model):
-    """This is the base model, thats contains the database of all subsequent tables."""
+    """
+        This is the base model, thats contains the
+        database of all subsequent tables.
+    """
 
     class Meta:
         """This class holds the corresponding database."""
 
         database = db
+
 
 class Image(BaseModel):
     """This table is for parse the album images is Bytes."""
@@ -58,15 +71,18 @@ class Image(BaseModel):
     album_name = CharField(null=False)
     image = BlobField(null=False)
 
+
 class Artist(BaseModel):
     """This table stands for artists names."""
 
     name = CharField(null=False, unique=True)
 
+
 class Genre(BaseModel):
     """This table stands for genres."""
 
     genres = CharField(null=False, unique=True)
+
 
 class Album(BaseModel):
     """This table holds the album metadata."""
@@ -79,9 +95,10 @@ class Album(BaseModel):
     album_tracks = IntegerField(null=True, unique=False)
     total_discs = IntegerField(null=True, unique=False)
 
+
 class Song(BaseModel):
     """This table holds the song metadata."""
-    
+
     title = CharField(null=False, unique=False)
     album = ForeignKeyField(Album, backref='songs', null=True)
     path = CharField(null=True, unique=False)
@@ -90,4 +107,3 @@ class Song(BaseModel):
     isrc = CharField(null=True, unique=False)
     track = IntegerField(null=True, unique=False)
     disc_number = IntegerField(null=True, unique=False)
-

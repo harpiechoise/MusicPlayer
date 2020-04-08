@@ -1,29 +1,29 @@
 """This is the loading window frontend."""
 from GUI.loading_window import Ui_CargandoWindow
-from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
-from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtCore, QtGui, QtWidgets
 import os
-import os
-import glob
 from pathlib import Path
 import mutagen
 from backend import dbQuerys as dq
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from QtCore import QThread, pyqtSignal
 
 
 class MusicLoader():
     """
     Scans the path searching music files.
-    
+
     Methods
     ------
     public load_music()
     ------
-    Search all the music file in a given directory 
+    Search all the music file in a given directory
     """
 
     def __init__(self, path):
-        """Configure the path, allowed files format for scrape all the music files."""
+        """
+        Configure the path, allowed files format
+        for scrape all the music files.
+        """
         self.path = path
         self.allowed_files = ['.flac', '.mp3', '.wav', '.ogg']
 
@@ -34,17 +34,18 @@ class MusicLoader():
         for path in Path(self.path).rglob(r'*.*'):
             # Return the posix string representation of the path
             strpath = path.absolute().as_posix()
-            # split the file in text and extension to filter the files 
+            # split the file in text and extension to filter the files
             # by path
             if os.path.splitext(strpath)[1] in self.allowed_files:
                 # if the file is allowed adds to a collection
                 r.append(strpath)
         return r
-    
+
+
 class MetaReader(QThread):
     """
     A PyQt5 Thread to create the songs in the database.
-        
+
         Properties
         -------------      -----------
        |change_value |    | Signals   |
@@ -52,12 +53,12 @@ class MetaReader(QThread):
        |finished     |    | booleans  |
        |             |    | or values |
         -------------      ------------
-       
+
        change_value: send a value to the progress bar
        song_name: send the song name for info label
        finished: tell to main window if the loading is finished
        TODO: make a state machine for finished values
-       
+
        Methods
        -------
        get_metadata
@@ -84,9 +85,11 @@ class MetaReader(QThread):
         # Total song
         self._total = len(self._music)
 
-
     def get_metadata(self, song):
-        """Get metadata of the song, creates the song instance, and save the song in the database."""
+        """
+           Get metadata of the song, creates the song instance, and save the
+           song in the database.
+        """
         # Open the song with mutagen library
         mt_file = mutagen.File(song)
         # split the time and get the minutes and secconds
@@ -95,13 +98,14 @@ class MetaReader(QThread):
         secconds = secconds if len(str(secconds)) == 2 else "0"+str(secconds)
         # make the song duration string
         song_duration = f"{minutes}:{secconds}"
-        # get the artist with the get method of dictionary with a fallback value
+        # get the artist with the get method of dictionary
+        # with a fallback value
         song_artist = mt_file.get('artist', ['Unknown Artist'])[0]
         genres = mt_file.get('genre', ['Unknow Genre'])
         album_name = mt_file.get('album', ['Unknow Album'])[0]
         album_year = mt_file.get('date', ["0000"])[0]
         song_track_number = mt_file.get('tracknumber', [0])[0]
-        total_tracks = mt_file.get('totaltracks', [0])[0]    
+        total_tracks = mt_file.get('totaltracks', [0])[0]
         total_discs = mt_file.get('totaldiscs', [0])[0]
         isrc = mt_file.get('isrc', ['No Info'])[0]
         song_disc_number = mt_file.get('discnumber', [0])[0]
@@ -110,7 +114,7 @@ class MetaReader(QThread):
         song_cover = mt_file.pictures
 
         album_image = None
-        
+
         if song_cover:
             if not isinstance(song_cover, bytes):
                 album_image = None
@@ -118,20 +122,20 @@ class MetaReader(QThread):
                 album_image = song_cover[0].data
         # Create the song instance and saves it
         dq.CreateSong(song,
-                song_encoder,
-                song_duration,
-                song_artist,
-                genres,
-                album_name,
-                album_year,
-                total_tracks,
-                total_discs,
-                song_title,
-                isrc,
-                song_track_number,
-                song_disc_number,
-                album_image=album_image).save()
-        
+                      song_encoder,
+                      song_duration,
+                      song_artist,
+                      genres,
+                      album_name,
+                      album_year,
+                      total_tracks,
+                      total_discs,
+                      song_title,
+                      isrc,
+                      song_track_number,
+                      song_disc_number,
+                      album_image=album_image).save()
+
         return
 
     def run(self):
@@ -143,15 +147,17 @@ class MetaReader(QThread):
             self.song_name.emit(song_name)
         self.finished.emit()
 
+
 # The SVG Icon constant
 # TODO: move constants to a configuration file
 SVG_ICON = os.path.join(os.getcwd(), 'GUI', 'UI', 'gear_2.gif')
+
 
 class LoadingWindow(QtWidgets.QMainWindow, Ui_CargandoWindow):
     """
     Loading window instance.
 
-    Holds all the UI design values and display the loading UI. 
+    Holds all the UI design values and display the loading UI.
     And make all the loading operations.
     """
 
@@ -191,7 +197,7 @@ class LoadingWindow(QtWidgets.QMainWindow, Ui_CargandoWindow):
     def load(self):
         """
         Set the progressbar to 0.
-           
+
            Creates the music loader instance
            Connects all the signals to the corresponding functions
            and start the song library creation

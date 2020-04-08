@@ -1,6 +1,6 @@
 """This is an inteface for all database operations."""
 
-from backend.dbArchitecture import Album, Artist, Song, Genre
+from backend.dbArchitecture import Album, Artist, Song
 from typing import List
 
 ArtistInstance = Artist
@@ -21,7 +21,7 @@ def get_artists() -> (ArtistList, ArtistStr):
     Returns
     -------
     ArtistList: The list of the artist object
-    ArtistStr: A colection of strings representations for artist Object 
+    ArtistStr: A colection of strings representations for artist Object
                and the number of songs
     """
     artists = [artist for artist in Artist.select()]
@@ -29,6 +29,7 @@ def get_artists() -> (ArtistList, ArtistStr):
     for artist in artists:
         artists_str.append(f"{artist.name} ({artist_n_songs(artist)})")
     return artists, artists_str
+
 
 def get_song_from_artist(artist: ArtistInstance) -> (SongsList):
     """
@@ -46,10 +47,11 @@ def get_song_from_artist(artist: ArtistInstance) -> (SongsList):
         songs = [song for song in albums.songs]
     return songs
 
+
 def get_artists_albums(artist: ArtistInstance) -> (AlbumList, AlbumStr):
     """
     Fetch all the albums of a given artist instance.
-    
+
     Params:
     -------
     Artist: An artist instance.
@@ -59,18 +61,20 @@ def get_artists_albums(artist: ArtistInstance) -> (AlbumList, AlbumStr):
     AlbumList: A collection of AlbumObjects.
     AlbumStr: A collection of strings representation of Album instances-
     """
-    album_str = [f'{album.name} ({album_n_songs(album)})' for album in artist.albums]
+    album_str = [f'{album.name} ({album_n_songs(album)})'
+                 for album in artist.albums]
     album = [album for album in artist.albums]
     return album, album_str
 
-def get_song_from_album(album: AlbumInstance) -> (SongList):
+
+def get_song_from_album(album: AlbumInstance) -> (SongsList):
     """
     Fetch all songs of a given album instance.
-    
+
     Params
     -------
     Album: Album instances.
-    
+
     Returns
     -------
     SongList: A collection of SongInstances.
@@ -78,10 +82,11 @@ def get_song_from_album(album: AlbumInstance) -> (SongList):
     songs = [song for song in album.songs]
     return songs
 
+
 def get_all_songs() -> (SongsList, NumberOfSongs):
     """
     Fetch all song on the database.
-    
+
     Returns:
     -------
     SongList: A collection of SongInstances.
@@ -90,10 +95,11 @@ def get_all_songs() -> (SongsList, NumberOfSongs):
     songs = [song for song in Song.select()]
     return songs, len(songs)
 
-def artist_n_songs(artist:ArtistInstance) -> (NumberOfSongs):
+
+def artist_n_songs(artist: ArtistInstance) -> (NumberOfSongs):
     """
     Count the songs of a given artist instance.
-    
+
     Params:
     ------
     ArtistInstance: An artist object instance
@@ -109,10 +115,11 @@ def artist_n_songs(artist:ArtistInstance) -> (NumberOfSongs):
         songs = [song for song in albums.songs]
     return len(songs)
 
+
 def album_n_songs(album: AlbumInstance) -> (NumberOfSongs):
     """
     Count the songs of a given album instance.
-    
+
     Params:
     ------
     AlbumInstance: An album object instance.

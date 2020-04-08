@@ -1,10 +1,44 @@
 from GUI.main_window import Ui_Pybar2000
+from GUI.loading import LoadingWindow
 from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QFileDialog
 import backend.dbGet as g
 import sys
 import miniaudio
 import os
+
+QSS = qss = """
+QMenuBar {
+    background-color: #595959
+}
+QMenuBar::item {
+    spacing: 3px;           
+    padding: 2px 10px;
+    background-color: #595959;
+}
+QMenuBar::item:selected {    
+    background-color: #757575;
+}
+QMenuBar::item:pressed {
+    background: #757575;
+}
+
+/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */  
+
+QMenu {
+    background-color: #999999;   
+    border: 1px solid black;
+    margin: 2px;
+}
+QMenu::item {
+    background-color: transparent;
+}
+QMenu::item:selected { 
+    background-color: #bfbfbf;
+    color: rgb(255,255,255);
+}
+"""
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     def __init__(self, parent=None):
@@ -29,7 +63,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         self.Prev.setStyleSheet(STYLE)
         self.Next.setStyleSheet(STYLE)
         self.Information.setHorizontalHeaderItem(0, prop)
-        self.Information.setHorizontalHeaderItem(1, value)        
+        self.Information.setHorizontalHeaderItem(1, value)
+        # Make Menu
+        bar = self.menuBar()
+        bar.setStyleSheet('background-color:#595959')
+        file_menu = bar.addMenu('Archivo')
+
+        # Test SubWindow
+        # self.form_loading = LoadingWindow(parent=MainWindow)
+
+        # Menu Actions
+        self.add_folder_action = QtWidgets.QAction('Abrir Carpeta', self)
+        self.close_app_action = QtWidgets.QAction('Salir', self)
+        file_menu.addAction(self.add_folder_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.close_app_action)
+        
+        self.add_folder_action.triggered.connect(self._select_folder)
+
         # Icon DIR
         ICON_DIR = os.path.join(os.getcwd(), 'GUI', 'UI')
         # Icons
@@ -97,7 +148,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
 
         # LEVEL SETTER
         self._set_level()
-
         # Toggle Audio Icon
         if not self.muted:
             self.ToggleAudio.setIcon(self.noMuteIcon)
@@ -112,14 +162,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
     #     for artist in self.artists_query:
     #         self.Explorer.addItem(artist.name)
 
-    
+    def _select_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Escoge una carpeta", "/home", QFileDialog.ShowDirsOnly)
+        self.form_loading = LoadingWindow(folder, parent=MainWindow)
+        self.form_loading.load()
+        self.songs_current, self.total = g.get_all_songs()
+        self.form_loading.closed.connect(self._finish_import)
+
+    def _finish_import(self):
+        print("FINISHED")
+        self._set_level()
+
     def _set_level(self, element=False):
         # Level 0: Todo
         # Level 1: Artists
+        self.songs_current, self.total = g.get_all_songs()
+        if not self.songs_current:
+            self.Explorer.setEnabled(False)
+        
         if self.level == 0:
+            self.Explorer.setEnabled(True)
             self.Explorer.clear()
             self.Atras.setEnabled(False)
-            self.songs_current, self.total = g.get_all_songs()
             self._populate_songs()
             self.Explorer.addItem(f'Todo ({self.total})')
             self.Explorer.setCurrentRow(0)
@@ -244,6 +308,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
         if not self.duration:
             return 0
         return int(100 * float(part)/float(self.duration))
+    
+    def _percentage_to_num(self, percent):
+        return (percent * self.duration) / 100.0
+
+    def _progress_value_changed(self, value):
+        position = self._percentage_to_num(value)
+        self.player.setPosition(position)
 
     def _position_changed(self, position):
         self.Progress.setValue(self._percentaje_calculator(position))
@@ -282,6 +353,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_Pybar2000):
 def main():
     app = QApplication(sys.argv)
     form = MainWindow()
+    app.setStyleSheet(QSS)
     form.show()
     app.exec()
 

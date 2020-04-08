@@ -3,7 +3,10 @@ from backend.dbArchitecture import Album, Artist, Song, Genre, Image
 from typing import List
 import os
 
-
+# Database Conection
+db = database.db
+# Table Creation
+db.create_tables([Artist, Song, Album, Genre, Image])
 Genres = List[str]
 DatabaseConnection = database.db
 ReleaseYear = str
@@ -25,10 +28,7 @@ class CreateSong():
                  song_disc_number=0,
                  album_image=None):
         
-        # Database Conection
-        self.db = database.db
-        # Table Creation
-        self.db.create_tables([Artist, Song, Album, Genre, Image])
+
 
         # Song Technical Data
         self.song_file_path = song_file_path
